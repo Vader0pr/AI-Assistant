@@ -152,7 +152,8 @@ namespace AiAssistant
         public static void UpdateProgram() => Process.Start(new ProcessStartInfo()
         {
             FileName = "AI-Installer.exe",
-            UseShellExecute = true
+            UseShellExecute = true,
+            WorkingDirectory = new FileInfo(Environment.CommandLine).Directory?.FullName
         });
     }
 }
