@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AI-Assistant Console": {
+      "commandName": "Project",
+      "commandLineArgs": "download a random song by playboi carti"
+    }
+  }
+}
