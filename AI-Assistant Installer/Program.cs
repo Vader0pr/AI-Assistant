@@ -31,7 +31,7 @@ namespace AiAssistant_Installer
                     await Task.WhenAll(releaseTasks);
                     timer.Stop();
                     var path = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
-                    if (path != null && !path.Contains(Environment.CurrentDirectory)) Environment.SetEnvironmentVariable("PATH", path + Environment.CurrentDirectory + ";");
+                    if (path != null && !path.Contains(Environment.CurrentDirectory)) Environment.SetEnvironmentVariable("PATH", path + Environment.CurrentDirectory + ";", EnvironmentVariableTarget.User);
                     versions.AiAssistant = releaseTasks[0].Result;
                     versions.Ffmpeg = releaseTasks[1].Result;
                     versions.Ytdlp = releaseTasks[2].Result;
