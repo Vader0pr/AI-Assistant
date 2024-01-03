@@ -82,7 +82,7 @@ namespace AiAssistant
             if (_functionTypes == null) { yield return "No function types selected."; yield break; }
             List<ToolDefinition> tools = [];
             if (_functionTypes.Contains(FunctionTypes.OperatingSystemInteractions))
-                tools.AddRange(FunctionCallingHelper.GetToolDefinitions(typeof(OperatingSystemIneraction)));
+                tools.AddRange(FunctionCallingHelper.GetToolDefinitions(typeof(OperatingSystemInteraction)));
             OpenAIService service = new(new OpenAiOptions
             {
                 ApiKey = ApiKey,
@@ -136,9 +136,9 @@ namespace AiAssistant
         {
             if (call == null) yield break;
             var args = call.ParseArguments().Values.AsEnumerable();
-            if (call.Name == nameof(OperatingSystemIneraction.ExecuteCommand)) await foreach (string output in OperatingSystemIneraction.ExecuteCommand(args.First().ToString() ?? "")) yield return output;
-            else if (call.Name == nameof(OperatingSystemIneraction.DownloadVideoOrAudioFromUrl)) await foreach (string output in OperatingSystemIneraction.DownloadVideoOrAudioFromUrl(args.Take(1).First().ToString() ?? "", bool.TryParse(args.Skip(1).Take(1).First().ToString(), out bool result) && result)) yield return output;
-            else if (call.Name == nameof(OperatingSystemIneraction.DownloadVideoOrAudioFromName)) await foreach (string output in OperatingSystemIneraction.DownloadVideoOrAudioFromName(args.Take(1).First().ToString() ?? "", bool.TryParse(args.Skip(1).Take(1).First().ToString(), out bool result) && result)) yield return output;
+            if (call.Name == nameof(OperatingSystemInteraction.ExecuteCommand)) await foreach (string output in OperatingSystemInteraction.ExecuteCommand(args.First().ToString() ?? "")) yield return output;
+            else if (call.Name == nameof(OperatingSystemInteraction.DownloadVideoOrAudioFromUrl)) await foreach (string output in OperatingSystemInteraction.DownloadVideoOrAudioFromUrl(args.Take(1).First().ToString() ?? "", bool.TryParse(args.Skip(1).Take(1).First().ToString(), out bool result) && result)) yield return output;
+            else if (call.Name == nameof(OperatingSystemInteraction.DownloadVideoOrAudioFromName)) await foreach (string output in OperatingSystemInteraction.DownloadVideoOrAudioFromName(args.Take(1).First().ToString() ?? "", bool.TryParse(args.Skip(1).Take(1).First().ToString(), out bool result) && result)) yield return output;
         }
         /// <summary>
         /// Invokes the <see cref="AssistantEvents.ApiKeyPrompt"/> and sets the API key to its return value. If events are not set it doesn't do anything.

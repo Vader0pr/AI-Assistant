@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace AiAssistant.Functions
 {
-    internal static class OperatingSystemIneraction
+    internal static class OperatingSystemInteraction
     {
         [FunctionDescription("Executes a command using cmd.")] public static async IAsyncEnumerable<string> ExecuteCommand(string command)
         {
