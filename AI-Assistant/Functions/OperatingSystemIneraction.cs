@@ -20,9 +20,9 @@ namespace AiAssistant.Functions
             if (process == null) { yield return "Failed to execute a command"; yield break; }
             while (!process.StandardOutput.EndOfStream)
             {
-                char[] buffer = new char[1];
+                char[] buffer = new char[1024];
                 await process.StandardOutput.ReadAsync(buffer.AsMemory());
-                yield return buffer[0].ToString();
+                foreach (char c in buffer) yield return c.ToString();
             }
         }
         [FunctionDescription("Downloads a video or audio by name")] public static async IAsyncEnumerable<string> DownloadVideoOrAudioFromName(string name, [ParameterDescription("Option to download only audio when downloading a video")] bool onlyAudio)
@@ -39,9 +39,9 @@ namespace AiAssistant.Functions
             if (process == null) { yield return "Failed download a video"; yield break; }
             while (!process.StandardOutput.EndOfStream)
             {
-                char[] buffer = new char[1];
+                char[] buffer = new char[1024];
                 await process.StandardOutput.ReadAsync(buffer.AsMemory());
-                yield return buffer[0].ToString();
+                foreach (char c in buffer) yield return c.ToString();
             }
         }
         [FunctionDescription("Downloads a video or audio from a url")] public static async IAsyncEnumerable<string> DownloadVideoOrAudioFromUrl(string url, [ParameterDescription("Option to download only audio when downloading a video")] bool onlyAudio)
@@ -58,9 +58,9 @@ namespace AiAssistant.Functions
             if (process == null) { yield return "Failed download a video"; yield break; }
             while (!process.StandardOutput.EndOfStream)
             {
-                char[] buffer = new char[1];
+                char[] buffer = new char[1024];
                 await process.StandardOutput.ReadAsync(buffer.AsMemory());
-                yield return buffer[0].ToString();
+                foreach (char c in buffer) yield return c.ToString();
             }
         }
     }

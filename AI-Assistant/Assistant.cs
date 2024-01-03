@@ -137,8 +137,8 @@ namespace AiAssistant
             if (call == null) yield break;
             var args = call.ParseArguments().Values.AsEnumerable();
             if (call.Name == nameof(OperatingSystemIneraction.ExecuteCommand)) await foreach (string output in OperatingSystemIneraction.ExecuteCommand(args.First().ToString() ?? "")) yield return output;
-            else if (call.Name == nameof(OperatingSystemIneraction.DownloadVideoOrAudioFromUrl)) await foreach (string output in OperatingSystemIneraction.DownloadVideoOrAudioFromUrl(args.Take(1).First().ToString() ?? "", bool.Parse(args.Take(1).First().ToString()))) yield return output;
-            else if (call.Name == nameof(OperatingSystemIneraction.DownloadVideoOrAudioFromName)) await foreach (string output in OperatingSystemIneraction.DownloadVideoOrAudioFromName(args.Take(1).First().ToString() ?? "", bool.Parse(args.Skip(1).Take(1).First().ToString()))) yield return output;
+            else if (call.Name == nameof(OperatingSystemIneraction.DownloadVideoOrAudioFromUrl)) await foreach (string output in OperatingSystemIneraction.DownloadVideoOrAudioFromUrl(args.Take(1).First().ToString() ?? "", bool.TryParse(args.Skip(1).Take(1).First().ToString(), out bool result) && result)) yield return output;
+            else if (call.Name == nameof(OperatingSystemIneraction.DownloadVideoOrAudioFromName)) await foreach (string output in OperatingSystemIneraction.DownloadVideoOrAudioFromName(args.Take(1).First().ToString() ?? "", bool.TryParse(args.Skip(1).Take(1).First().ToString(), out bool result) && result)) yield return output;
         }
         /// <summary>
         /// Invokes the <see cref="AssistantEvents.ApiKeyPrompt"/> and sets the API key to its return value. If events are not set it doesn't do anything.
