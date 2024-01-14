@@ -1,12 +1,12 @@
-﻿using AI_Assistant.Sessions.Models;
+﻿using AiAssistant.Sessions.Models;
 using OpenAI.ObjectModels.RequestModels;
 using ProtoBuf;
 
-namespace AI_Assistant.Sessions
+namespace AiAssistant.Sessions
 {
     internal sealed class SessionManager
     {
-        private const string _sessionFileName = "Session.sm";
+        private const string _sessionFileName = ".session";
         private static readonly string _sesionFilePath = Path.Combine(new FileInfo(Environment.GetCommandLineArgs()[0]).DirectoryName ?? "", _sessionFileName);
         private Session? _session = null;
         public void ClearSession()
@@ -14,34 +14,30 @@ namespace AI_Assistant.Sessions
             File.Delete(_sesionFilePath);
             _session = null;
         }
-        public async ValueTask<List<ChatMessage>> GetChatMessagesAsync()
+        public async ValueTask<IList<ChatMessage>> GetChatMessagesAsync()
         {
-            if (_session != null) return _session.Messages;
+            if (_session != null) return await _session.GetMessages();
             else await LoadSession();
-            return _session != null ? _session.Messages : [];
+            return _session != null ? await _session.GetMessages() : [];
         }
         public async Task AddMessage(ChatMessage message)
         {
             if (_session == null) await LoadSession();
             (_session ??= new()).AddMessage(message);
-            using (FileStream fs = File.Create(_sesionFilePath))
+            await using (FileStream fs = File.Create(_sesionFilePath))
             {
                 Serializer.Serialize(fs, _session ?? new());
                 await fs.FlushAsync();
-                fs.Close();
-                await fs.DisposeAsync();
             }
         }
         private async Task LoadSession()
         {
             if (!File.Exists(_sesionFilePath)) return;
             {
-                using (FileStream fs = File.OpenRead(_sesionFilePath))
+                await using (FileStream fs = File.OpenRead(_sesionFilePath))
                 {
                     _session = Serializer.Deserialize<Session>(fs);
                     await fs.FlushAsync();
-                    fs.Close();
-                    await fs.DisposeAsync();
                 }
             }
         }

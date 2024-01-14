@@ -1,7 +1,7 @@
 ﻿using OpenAI.ObjectModels.RequestModels;
 using ProtoBuf;
 
-namespace AI_Assistant.Sessions.Models
+namespace AiAssistant.Sessions.Models
 {
     [ProtoContract]
     internal sealed class ToolCallSerializable
@@ -23,7 +23,7 @@ namespace AI_Assistant.Sessions.Models
             {
                 Id = call.Id,
                 Type = call.Type,
-                FunctionCall = call.FunctionCall.ToFunctionCall()
+                FunctionCall = call.FunctionCall?.ToFunctionCall()
             });
             return toolCalls;
         }

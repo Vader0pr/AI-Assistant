@@ -22,8 +22,8 @@ namespace AiAssistant_Installer
                     Task<string?>[] releaseTasks =
                     [
                         Task.Run(() => CheckForUpdate("Vader0pr", "AI-Assistant", versions.AiAssistant ?? "", FileType.Zip, 1, ["Console.zip"], [], mainFile: true)),
-                        Task.Run(() => CheckForUpdate("BtbN", "FFmpeg-Builds", versions.Ffmpeg ?? "", FileType.Zip, 2, ["win64", "gpl", "zip"], ["shared", "linux"], true)),
-                        Task.Run(() => CheckForUpdate("yt-dlp", "yt-dlp", versions.Ytdlp ?? "", FileType.Exe, 3, ["yt-dlp.exe"], [])),
+                        Task.Run(() => CheckForUpdate("BtbN", "FFmpeg-Builds", versions.Ffmpeg ?? "", FileType.Zip, 2, [OperatingSystem.IsWindows() ? "win64" : "linux64", "gpl", "zip"], ["shared", "linux"], true)),
+                        Task.Run(() => CheckForUpdate("yt-dlp", "yt-dlp", versions.Ytdlp ?? "", FileType.Exe, 3, OperatingSystem.IsWindows() ? ["yt-dlp.exe"] : ["yt-dlp"], OperatingSystem.IsWindows() ? [] : ["yt-dlp.exe"])),
                     ];
                     System.Timers.Timer timer = new(1000);
                     timer.Elapsed += Timer_Elapsed;
@@ -113,7 +113,7 @@ namespace AiAssistant_Installer
                 ZipFile.ExtractToDirectory(assetName, folderName);
                 foreach (string file in Directory.EnumerateFiles(path))
                 {
-                    string destination = Path.Combine(Environment.CurrentDirectory + "\\" + new FileInfo(file).Name);
+                    string destination = Path.Combine(Environment.CurrentDirectory, new FileInfo(file).Name);
                     File.Move(file, destination, true);
                 }
                 Directory.Delete(folderName, true);

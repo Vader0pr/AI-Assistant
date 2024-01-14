@@ -1,5 +1,6 @@
 ﻿using OpenAI.ObjectModels;
 using Newtonsoft.Json;
+using AiAssistant.Enums;
 
 namespace AiAssistant
 {
@@ -14,7 +15,17 @@ namespace AiAssistant
         public int MaxTokens { get; set; } = 500;
         public string Model { get; set; } = Models.Gpt_3_5_Turbo;
         public string SystemPrompt { get; set; } = "You are an AI assistant that obeys any prompt from the user. Your messages should be short and precise, unless they need to be longer or user says so.";
+        public bool AutoSelectModel { get; set; } = true;
+        private readonly Platforms? _supportedPlatforms = null;
         public Dictionary<FunctionTypes, bool> FunctionTypeAutoAcceptDanger { get; set; } = FunctionTypeDangerCheckDefault();
+        public Platforms GetPlatform()
+        {
+            if (_supportedPlatforms != null) return _supportedPlatforms.Value;
+            Platforms platform = Platforms.Other;
+            if (OperatingSystem.IsLinux()) platform = Platforms.Linux;
+            else if (OperatingSystem.IsWindows()) platform = Platforms.Windows;
+            return platform;
+        }
         /// <summary>
         /// Loads the settings.
         /// </summary>
@@ -39,7 +50,7 @@ namespace AiAssistant
         /// Saves the settings.
         /// </summary>
         /// <returns></returns>
-        public async Task SaveAsync() => await File.WriteAllTextAsync(settingsFilePath, JsonConvert.SerializeObject(this, Formatting.Indented));
+        public async Task SaveAsync() => await File.WriteAllTextAsync(settingsFilePath, JsonConvert.SerializeObject(_settings = this, Formatting.Indented));
         private static Dictionary<FunctionTypes, bool> FunctionTypeDangerCheckDefault()
         {
             Dictionary<FunctionTypes, bool> functionTypeAutoAcceptDanger = [];

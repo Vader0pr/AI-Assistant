@@ -2,6 +2,6 @@
 {
     public class AssistentNotInitializedException : Exception
     {
-        public AssistentNotInitializedException() : base("Assistent not initialized.") { }
+        public AssistentNotInitializedException() : base("Assistant not initialized.") { }
     }
 }
