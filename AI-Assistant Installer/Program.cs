@@ -1,6 +1,8 @@
 ﻿using AiAssistant_Installer.Github;
 using System.IO.Compression;
 using System.Timers;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace AiAssistant_Installer
 {
@@ -21,17 +23,20 @@ namespace AiAssistant_Installer
                 {
                     Task<string?>[] releaseTasks =
                     [
-                        Task.Run(() => CheckForUpdate("Vader0pr", "AI-Assistant", versions.AiAssistant ?? "", FileType.Zip, 1, ["Console.zip"], [], mainFile: true)),
-                        Task.Run(() => CheckForUpdate("BtbN", "FFmpeg-Builds", versions.Ffmpeg ?? "", FileType.Zip, 2, [OperatingSystem.IsWindows() ? "win64" : "linux64", "gpl", "zip"], ["shared", "linux"], true)),
-                        Task.Run(() => CheckForUpdate("yt-dlp", "yt-dlp", versions.Ytdlp ?? "", FileType.Exe, 3, OperatingSystem.IsWindows() ? ["yt-dlp.exe"] : ["yt-dlp"], OperatingSystem.IsWindows() ? [] : ["yt-dlp.exe"])),
+                        Task.Run(() => CheckForUpdate("Vader0pr", "AI-Assistant", versions.AiAssistant ?? "", FileType.Zip, 1, OperatingSystem.IsWindows() ? @"Console-win64\.zip" : @"Console-linux64\.zip")),
+                        Task.Run(() => CheckForUpdate("BtbN", "FFmpeg-Builds", versions.Ffmpeg ?? "", FileType.Zip, 2, OperatingSystem.IsWindows() ? @"ffmpeg-master-latest-win64-gpl\.zip" : @"ffmpeg-master-latest-linux64-gpl\.tar\.xz", ffmpeg: true)),
+                        Task.Run(() => CheckForUpdate("yt-dlp", "yt-dlp", versions.Ytdlp ?? "", FileType.Exe, 3, OperatingSystem.IsWindows() ? @"yt-dlp\.exe" : @"yt-dlp(?!.)")),
                     ];
                     System.Timers.Timer timer = new(1000);
                     timer.Elapsed += Timer_Elapsed;
                     timer.Start();
                     await Task.WhenAll(releaseTasks);
                     timer.Stop();
-                    var path = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
-                    if (path != null && !path.Contains(Environment.CurrentDirectory)) Environment.SetEnvironmentVariable("PATH", path + Environment.CurrentDirectory + ";", EnvironmentVariableTarget.User);
+                    if (OperatingSystem.IsWindows())
+                    {
+                        var path = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+                        if (path != null && !path.Contains(Environment.CurrentDirectory)) Environment.SetEnvironmentVariable("PATH", path + Environment.CurrentDirectory + ";", EnvironmentVariableTarget.User);
+                    }
                     versions.AiAssistant = releaseTasks[0].Result;
                     versions.Ffmpeg = releaseTasks[1].Result;
                     versions.Ytdlp = releaseTasks[2].Result;
@@ -51,35 +56,33 @@ namespace AiAssistant_Installer
                 await Task.Delay(5000);
                 Environment.Exit(0);
             });
-            Console.ReadKey();
+            Console.Read();
         }
-        static async Task<string?> CheckForUpdate(string owner, string repo, string version, FileType fileType, int downloadId, string[] filter, string[] negativeFilter, bool ffmpeg = false, bool mainFile = false)
+        static async Task<string?> CheckForUpdate(string owner, string repo, string version, FileType fileType, int downloadId, string filter, bool ffmpeg = false)
         {
             using (GithubApiClient client = new())
             {
                 var release = await client.GetLatestReleaseAsync(owner, repo);
                 if (release == null || release.Assets == null) return null;
-                if (release.Name != version) await Install(repo, fileType, downloadId, filter, negativeFilter, release.Assets, ffmpeg, mainFile);
+                if (release.Name != version) await Install(repo, fileType, downloadId, filter, release.Assets, ffmpeg);
                 else Messages.Add($"{owner}/{repo} already has the latest version");
                 return release.Name;
             }
         }
-        static async Task Install(string repo, FileType fileType, int downloadId, string[] filter, string[] negativeFilter, ReleaseAsset[] assets, bool ffmpeg = false, bool mainFile = false)
+        static async Task Install(string repo, FileType fileType, int downloadId, string filter, ReleaseAsset[] assets, bool ffmpeg = false)
         {
-            IQueryable<ReleaseAsset> assetsQuery = assets.AsQueryable();
-            foreach (string item in filter) assetsQuery = assetsQuery.Where(x => (x.Name ?? "").Contains(item));
-            foreach (string item in negativeFilter) assetsQuery = assetsQuery.Where(x => !(x.Name ?? "").Contains(item));
+            IQueryable<ReleaseAsset> assetsQuery = assets.AsQueryable().Where(x => Regex.IsMatch(x.Name ?? "", filter));
             ReleaseAsset asset = assetsQuery.First();
 
             string assetName = asset.Name ?? repo + ".zip";
-            string folderName = assetName.Replace(new FileInfo(assetName).Extension, "");
+            string? folderName = assetName.Split('.').Length > 1 ? assetName.Split('.')[0] : null;
 
             if (File.Exists(asset.Name)) File.Delete(asset.Name);
-            if (Directory.Exists(folderName)) Directory.Delete(folderName, true);
+            if (folderName != null && Directory.Exists(folderName)) Directory.Delete(folderName, true);
 
             using (HttpClient client = new())
             {
-                using (FileStream fs = new(assetName, FileMode.Create, FileAccess.Write))
+                await using (FileStream fs = new(assetName, FileMode.Create, FileAccess.Write))
                 {
                     Stream stream = await client.GetStreamAsync(asset.DownloadUrl);
                     int totalBytesRead = 0;
@@ -100,17 +103,27 @@ namespace AiAssistant_Installer
                     }
                 }
             }
-            if (fileType == FileType.Zip && !ffmpeg)
+            if (fileType == FileType.Zip && !ffmpeg && folderName != null)
             {
                 ZipFile.ExtractToDirectory(assetName, folderName);
                 File.Delete(assetName);
                 foreach (string file in Directory.EnumerateFiles(folderName)) File.Move(file, Path.Combine(Environment.CurrentDirectory, new FileInfo(file).Name), true);
                 Directory.Delete(folderName, true);
             }
-            if (ffmpeg)
+            if (ffmpeg && folderName != null)
             {
-                string path = Path.Combine(folderName, folderName, "bin");
-                ZipFile.ExtractToDirectory(assetName, folderName);
+                string path = Path.Combine(folderName, "bin");
+                if (OperatingSystem.IsWindows() || assetName.EndsWith(".zip")) ZipFile.ExtractToDirectory(assetName, "");
+                else if (assetName.EndsWith("tar.xz"))
+                {
+                    Process? extract = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "/bin/bash",
+                        Arguments = $"-c \"tar -xf {assetName}\"",
+                        UseShellExecute = false
+                    });
+                    if (extract != null) await extract.WaitForExitAsync();
+                }
                 foreach (string file in Directory.EnumerateFiles(path))
                 {
                     string destination = Path.Combine(Environment.CurrentDirectory, new FileInfo(file).Name);

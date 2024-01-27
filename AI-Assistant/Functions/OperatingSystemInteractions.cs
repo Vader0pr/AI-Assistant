@@ -21,8 +21,8 @@ namespace AiAssistant.Functions
                 Arguments = settings.GetPlatform() switch
                 {
                     Platforms.Windows => $"/c \"{command}\"",
-                    Platforms.Linux => command,
-                    _ => command
+                    Platforms.Linux => $"-c \"{command}\"",
+                    _ => "-c \" " + command + " \""
                 },
                 UseShellExecute = false,
                 WorkingDirectory = Environment.CurrentDirectory,
