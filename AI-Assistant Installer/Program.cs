@@ -8,6 +8,7 @@ namespace AiAssistant_Installer
 {
     internal sealed class Program
     {
+        static readonly string installDirectory = new FileInfo(Environment.GetCommandLineArgs()[0]).DirectoryName ?? Environment.CurrentDirectory;
         static int donwloadtime = 1;
         static readonly List<string> Messages = [];
         static async Task Main()
@@ -35,7 +36,7 @@ namespace AiAssistant_Installer
                     if (OperatingSystem.IsWindows())
                     {
                         var path = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
-                        if (path != null && !path.Contains(Environment.CurrentDirectory)) Environment.SetEnvironmentVariable("PATH", path + Environment.CurrentDirectory + ";", EnvironmentVariableTarget.User);
+                        if (path != null && !path.Contains(installDirectory)) Environment.SetEnvironmentVariable("PATH", path + installDirectory + ";", EnvironmentVariableTarget.User);
                     }
                     versions.AiAssistant = releaseTasks[0].Result;
                     versions.Ffmpeg = releaseTasks[1].Result;
@@ -107,13 +108,13 @@ namespace AiAssistant_Installer
             {
                 ZipFile.ExtractToDirectory(assetName, folderName);
                 File.Delete(assetName);
-                foreach (string file in Directory.EnumerateFiles(folderName)) File.Move(file, Path.Combine(Environment.CurrentDirectory, new FileInfo(file).Name), true);
+                foreach (string file in Directory.EnumerateFiles(folderName)) File.Move(file, Path.Combine(installDirectory, new FileInfo(file).Name), true);
                 Directory.Delete(folderName, true);
             }
             if (ffmpeg && folderName != null)
             {
                 string path = Path.Combine(folderName, "bin");
-                if (OperatingSystem.IsWindows() || assetName.EndsWith(".zip")) ZipFile.ExtractToDirectory(assetName, "");
+                if (OperatingSystem.IsWindows() || assetName.EndsWith(".zip")) ZipFile.ExtractToDirectory(assetName, installDirectory);
                 else if (assetName.EndsWith("tar.xz"))
                 {
                     Process? extract = Process.Start(new ProcessStartInfo
@@ -126,7 +127,7 @@ namespace AiAssistant_Installer
                 }
                 foreach (string file in Directory.EnumerateFiles(path))
                 {
-                    string destination = Path.Combine(Environment.CurrentDirectory, new FileInfo(file).Name);
+                    string destination = Path.Combine(installDirectory, new FileInfo(file).Name);
                     File.Move(file, destination, true);
                 }
                 Directory.Delete(folderName, true);
